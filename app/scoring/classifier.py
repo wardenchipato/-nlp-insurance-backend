@@ -1,36 +1,42 @@
-def classify_risk(final_score: float) -> dict:
+def classify_policyholder_risk(predicted_claim_risk_score: float) -> dict:
     """
-    Classifies the final risk score into
-    Low, Medium, or High risk category.
+    Map blended 0–100 score to underwriting bands:
+    0–20 Low, 21–40 Medium, 41–60 High, 61–80 Very High, 81+ Critical.
     """
+    s = float(predicted_claim_risk_score)
 
-    if final_score >= 67:
-        risk_class = "High"
-        color = "red"
+    if s >= 81:
+        policyholder_risk_class = "Critical"
         recommendation = (
-            "High premium loading required. "
-            "Consider coverage restrictions."
+            "This policyholder presents CRITICAL future claim risk based on the assessed profile. "
+            "Immediate underwriting review, strong premium loading, and strict coverage terms are indicated."
         )
-
-    elif final_score >= 34:
-        risk_class = "Medium"
-        color = "yellow"
+    elif s >= 61:
+        policyholder_risk_class = "Very High"
         recommendation = (
-            "Moderate premium loading. "
-            "Flag for underwriter review."
+            "This policyholder presents VERY HIGH future claim risk. "
+            "Apply substantial premium loading and detailed underwriting review."
         )
-
+    elif s >= 41:
+        policyholder_risk_class = "High"
+        recommendation = (
+            "This policyholder presents HIGH future claim risk based on assessed patterns. "
+            "Apply premium loading and consider coverage restrictions."
+        )
+    elif s >= 21:
+        policyholder_risk_class = "Medium"
+        recommendation = (
+            "This policyholder presents MODERATE future claim risk. "
+            "Apply moderate premium loading and underwriter review."
+        )
     else:
-        risk_class = "Low"
-        color = "green"
+        policyholder_risk_class = "Low"
         recommendation = (
-            "Standard premium applies. "
-            "No additional loading required."
+            "This policyholder presents LOW future claim risk. "
+            "Standard premium terms are generally appropriate."
         )
 
     return {
-        "risk_class": risk_class,
-        "color": color,
-        "recommendation": recommendation,
-        "final_score": round(final_score, 2),
+        "policyholder_risk_class": policyholder_risk_class,
+        "underwriting_recommendation": recommendation,
     }
