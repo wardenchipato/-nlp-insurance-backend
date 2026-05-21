@@ -1,30 +1,108 @@
-# NLP insurance backend
+# System Insurance — running the app
 
-Knowledge-base accident reports live as `.txt` files under `knowledge/` (same folder for manual upload, scraper, and folder scan).
+The project has three runnable pieces:
 
-## Scrape news into `knowledge/`
+| Part | Role | Default URL |
+|------|------|-------------|
+| **Backend API** | FastAPI (`uvicorn`), REST + WebSockets | [http://localhost:8000](http://localhost:8000) |
+| **KB admin UI** | Vite + React for knowledge-base admin (dev server proxies to the API) | [http://localhost:3002/admin/](http://localhost:3002/admin/) |
+| **Main frontend** | Create React App — policyholder assessment UI | [http://localhost:3000](http://localhost:3000) |
 
-1. Install deps: `pip install -r requirements.txt`
-2. Edit `scrape_sources.yaml` to add listing URLs under `sources:`.
-3. Run (from repo root):
+The main app calls the API at `http://127.0.0.1:8000` unless you set `REACT_APP_API_URL`.
+
+---
+
+## First-time setup
+
+**Backend (Python)**
 
 ```powershell
-.\run_scraper.ps1
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
 ```
 
-Or:
+**Node (both UIs)**
 
 ```powershell
-py scripts/run_scraper.py
-py scripts/run_scraper.py --source newsday_accidents
+cd frontend
+npm install
+
+cd ..\backend\kb-admin
+npm install
 ```
 
-Or call `POST /api/kb/scrape` while the API is running.
+---
 
-Scraped files use the metadata header format (`Source`, `Date of Report`, `Source URL`, …) and are saved via the same `write_txt_file` path as admin uploads. Each run **re-downloads and overwrites** articles found on the listing pages (same URL → same filename, updated content).
+## Launch everything (recommended on Windows)
 
-NewsDay accident listings: [topic/accidents](https://www.newsday.co.zw/index.php/topic/accidents) and [tag/road-accidents](https://www.newsday.co.zw/tag/road-accidents) (configured in `scrape_sources.yaml`).
+**Terminal 1 — API + KB admin (network stack script)**
 
-Only **road-traffic / accident** articles are kept (`accident_filter` in `scrape_sources.yaml`). Adjust `min_score` or add phrases under `extra_strong_phrases` / `extra_weak_terms` if you need broader coverage.
+From the repo root:
 
-Then run **Scan folder** and **Run NLP** in the KB admin UI.
+```powershell
+cd backend
+.\run_stack.ps1
+```
+
+This script:
+
+1. Starts the API with **uvicorn** on **port 8000** (`app.api_main:app`, `--reload`, `--host 0.0.0.0`).
+2. After a short pause, starts the KB admin dev server with **`npm run dev`** in `backend\kb-admin` (**port 3002**).
+
+Requirements: `backend\venv` must exist with dependencies installed; `kb-admin` must have `npm install` done.
+
+**Terminal 2 — main UI**
+
+```powershell
+cd frontend
+npm start
+```
+
+Open [http://localhost:3000](http://localhost:3000) for the assessment UI. Keep the API running on 8000 so requests succeed.
+
+---
+
+## Launch each part manually
+
+Use separate terminals if you prefer not to use `run_stack.ps1`.
+
+1. **Backend API**
+
+   ```powershell
+   cd backend
+   .\venv\Scripts\Activate.ps1
+   uvicorn app.api_main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+2. **KB admin UI**
+
+   ```powershell
+   cd backend\kb-admin
+   npm run dev
+   ```
+
+   Dev server: [http://localhost:3002/admin/](http://localhost:3002/admin/) (Vite proxies `/api` and `/ws` to port 8000).
+
+3. **Main frontend**
+
+   ```powershell
+   cd frontend
+   npm start
+   ```
+
+---
+
+## KB admin served from the API (production-style)
+
+After `npm run build` in `backend\kb-admin`, the API can serve the built admin at **[/admin/](http://localhost:8000/admin/)** when `kb-admin/dist` exists. You do not need the Vite dev server on 3002 for that.
+
+---
+
+## Troubleshooting
+
+- **“Could not reach the API”** in the main UI: start uvicorn on port **8000** first.
+- **`run_stack.ps1` errors on venv**: create and populate `backend\venv` as in first-time setup.
+- **Port already in use**: stop other apps on 3000, 3002, or 8000, or change ports in `frontend` (e.g. `set PORT=3001` before `npm start`), `kb-admin/package.json` / `vite.config.js`, and uvicorn `--port`.

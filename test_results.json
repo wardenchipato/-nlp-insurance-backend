@@ -1,0 +1,235 @@
+[
+  {
+    "request": {
+      "environmental_flags": [],
+      "annual_mileage": 20000,
+      "time_flags": [],
+      "area_type": "urban",
+      "vehicle_flags": [],
+      "additional_place_keywords": "",
+      "age": 25,
+      "vehicle_type": "sports_car",
+      "behavioural_flags": [
+        "speeding"
+      ],
+      "prior_claims": 2,
+      "location_flags": [],
+      "primary_city_or_region": "harare",
+      "claims_flags": []
+    },
+    "description": "Young driver with sports car",
+    "timestamp": "2026-05-13 15:36:13",
+    "test_id": "T001",
+    "error": "Response status code does not indicate success: 422 (Unprocessable Entity)."
+  },
+  {
+    "request": {
+      "environmental_flags": [],
+      "annual_mileage": 10000,
+      "time_flags": [],
+      "area_type": "suburban",
+      "vehicle_flags": [],
+      "additional_place_keywords": "",
+      "age": 45,
+      "vehicle_type": "sedan",
+      "behavioural_flags": [],
+      "prior_claims": 0,
+      "location_flags": [],
+      "primary_city_or_region": "mutare",
+      "claims_flags": []
+    },
+    "description": "Mature driver with sedan",
+    "timestamp": "2026-05-13 15:36:13",
+    "test_id": "T002",
+    "error": "Response status code does not indicate success: 422 (Unprocessable Entity)."
+  },
+  {
+    "request": {
+      "environmental_flags": [
+        "rain"
+      ],
+      "annual_mileage": 30000,
+      "time_flags": [
+        "night"
+      ],
+      "area_type": "urban",
+      "vehicle_flags": [],
+      "additional_place_keywords": "industrial area",
+      "age": 35,
+      "vehicle_type": "truck",
+      "behavioural_flags": [],
+      "prior_claims": 1,
+      "location_flags": [],
+      "primary_city_or_region": "bulawayo",
+      "claims_flags": []
+    },
+    "description": "Commercial driver high mileage",
+    "timestamp": "2026-05-13 15:36:14",
+    "test_id": "T003",
+    "error": "Response status code does not indicate success: 422 (Unprocessable Entity)."
+  },
+  {
+    "request": {
+      "environmental_flags": [],
+      "annual_mileage": 8000,
+      "time_flags": [],
+      "area_type": "rural",
+      "vehicle_flags": [],
+      "additional_place_keywords": "",
+      "age": 65,
+      "vehicle_type": "sedan",
+      "behavioural_flags": [],
+      "prior_claims": 1,
+      "location_flags": [],
+      "primary_city_or_region": "masvingo",
+      "claims_flags": []
+    },
+    "description": "Elderly driver with claims history",
+    "timestamp": "2026-05-13 15:36:14",
+    "test_id": "T004",
+    "error": "Response status code does not indicate success: 422 (Unprocessable Entity)."
+  },
+  {
+    "request": {
+      "environmental_flags": [],
+      "annual_mileage": 15000,
+      "time_flags": [],
+      "area_type": "urban",
+      "vehicle_flags": [],
+      "additional_place_keywords": "cbd",
+      "age": 30,
+      "vehicle_type": "hatchback",
+      "behavioural_flags": [
+        "drunk_driving",
+        "speeding"
+      ],
+      "prior_claims": 2,
+      "location_flags": [],
+      "primary_city_or_region": "harare",
+      "claims_flags": []
+    },
+    "description": "Driver with DUI and speeding",
+    "timestamp": "2026-05-13 15:36:14",
+    "test_id": "T005",
+    "error": "Response status code does not indicate success: 422 (Unprocessable Entity)."
+  },
+  {
+    "request": {
+      "environmental_flags": [
+        "rain",
+        "fog",
+        "poor_visibility"
+      ],
+      "annual_mileage": 12000,
+      "time_flags": [
+        "night"
+      ],
+      "area_type": "suburban",
+      "vehicle_flags": [],
+      "additional_place_keywords": "",
+      "age": 40,
+      "vehicle_type": "sedan",
+      "behavioural_flags": [],
+      "prior_claims": 0,
+      "location_flags": [],
+      "primary_city_or_region": "gweru",
+      "claims_flags": []
+    },
+    "description": "Driver with poor weather exposure",
+    "timestamp": "2026-05-13 15:36:14",
+    "test_id": "T006",
+    "error": "Response status code does not indicate success: 422 (Unprocessable Entity)."
+  },
+  {
+    "request": {
+      "environmental_flags": [],
+      "annual_mileage": 18000,
+      "time_flags": [],
+      "area_type": "urban",
+      "vehicle_flags": [],
+      "additional_place_keywords": "high density",
+      "age": 22,
+      "vehicle_type": "motorcycle",
+      "behavioural_flags": [
+        "speeding"
+      ],
+      "prior_claims": 1,
+      "location_flags": [],
+      "primary_city_or_region": "harare",
+      "claims_flags": []
+    },
+    "description": "Young motorcycle rider",
+    "timestamp": "2026-05-13 15:36:14",
+    "test_id": "T007",
+    "error": "Response status code does not indicate success: 422 (Unprocessable Entity)."
+  },
+  {
+    "request": {
+      "environmental_flags": [],
+      "annual_mileage": 9000,
+      "time_flags": [],
+      "area_type": "suburban",
+      "vehicle_flags": [],
+      "additional_place_keywords": "",
+      "age": 48,
+      "vehicle_type": "suv",
+      "behavioural_flags": [],
+      "prior_claims": 0,
+      "location_flags": [],
+      "primary_city_or_region": "mutare",
+      "claims_flags": []
+    },
+    "description": "Clean record driver",
+    "timestamp": "2026-05-13 15:36:14",
+    "test_id": "T008",
+    "error": "Response status code does not indicate success: 422 (Unprocessable Entity)."
+  },
+  {
+    "request": {
+      "environmental_flags": [],
+      "annual_mileage": 22000,
+      "time_flags": [],
+      "area_type": "urban",
+      "vehicle_flags": [
+        "fair_tyres"
+      ],
+      "additional_place_keywords": "central",
+      "age": 32,
+      "vehicle_type": "hatchback",
+      "behavioural_flags": [
+        "distracted_driving"
+      ],
+      "prior_claims": 2,
+      "location_flags": [],
+      "primary_city_or_region": "bulawayo",
+      "claims_flags": []
+    },
+    "description": "Distracted driver with prior claims",
+    "timestamp": "2026-05-13 15:36:14",
+    "test_id": "T009",
+    "error": "Response status code does not indicate success: 422 (Unprocessable Entity)."
+  },
+  {
+    "request": {
+      "environmental_flags": [],
+      "annual_mileage": 6000,
+      "time_flags": [],
+      "area_type": "rural",
+      "vehicle_flags": [],
+      "additional_place_keywords": "rural roads",
+      "age": 62,
+      "vehicle_type": "sedan",
+      "behavioural_flags": [
+        "driver_fatigue"
+      ],
+      "prior_claims": 1,
+      "location_flags": [],
+      "primary_city_or_region": "masvingo",
+      "claims_flags": []
+    },
+    "description": "Senior driver with fatigue",
+    "timestamp": "2026-05-13 15:36:14",
+    "test_id": "T010",
+    "error": "Response status code does not indicate success: 422 (Unprocessable Entity)."
+  }
+]

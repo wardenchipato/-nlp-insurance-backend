@@ -1,1 +1,0 @@
-# Accident knowledge base package
