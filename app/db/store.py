@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
+from app.kb.metadata import metadata_with_recency, parse_kb_metadata
 from app.kb.paths import LOCAL_DB_PATH, KNOWLEDGE_DIR, ensure_kb_dirs, knowledge_scan_roots
 
 _schema_ready = False
@@ -89,6 +90,9 @@ def init_db() -> None:
             conn.execute(
                 "ALTER TABLE knowledge_file ADD COLUMN char_count INTEGER NOT NULL DEFAULT 0"
             )
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(knowledge_file)").fetchall()}
+        if "metadata_json" not in cols:
+            conn.execute("ALTER TABLE knowledge_file ADD COLUMN metadata_json TEXT")
         conn.commit()
         _schema_ready = True
     finally:
@@ -126,9 +130,14 @@ def sync_knowledge_folder() -> int:
     with get_conn() as conn:
         for basename, path in on_disk.items():
             st = os.stat(path)
+            meta_blob = None
             try:
                 with open(path, "r", encoding="utf-8", errors="replace") as fh:
-                    char_count = len(fh.read())
+                    raw = fh.read()
+                char_count = len(raw)
+                meta, _ = parse_kb_metadata(raw)
+                meta = metadata_with_recency(meta)
+                meta_blob = json.dumps(meta)
             except OSError:
                 char_count = 0
             row = conn.execute(
@@ -138,19 +147,21 @@ def sync_knowledge_folder() -> int:
                 conn.execute(
                     """
                     UPDATE knowledge_file
-                    SET file_size = ?, char_count = ?, mtime = ?, last_seen_utc = ?, is_present = 1
+                    SET file_size = ?, char_count = ?, mtime = ?, last_seen_utc = ?,
+                        is_present = 1, metadata_json = ?
                     WHERE filename = ?
                     """,
-                    (st.st_size, char_count, st.st_mtime, now, basename),
+                    (st.st_size, char_count, st.st_mtime, now, meta_blob, basename),
                 )
             else:
                 conn.execute(
                     """
                     INSERT INTO knowledge_file
-                    (filename, file_size, char_count, mtime, first_seen_utc, last_seen_utc, is_present)
-                    VALUES (?, ?, ?, ?, ?, ?, 1)
+                    (filename, file_size, char_count, mtime, first_seen_utc, last_seen_utc,
+                     is_present, metadata_json)
+                    VALUES (?, ?, ?, ?, ?, ?, 1, ?)
                     """,
-                    (basename, st.st_size, char_count, st.st_mtime, now, now),
+                    (basename, st.st_size, char_count, st.st_mtime, now, now, meta_blob),
                 )
         if on_disk:
             placeholders = ",".join("?" for _ in on_disk)
@@ -175,7 +186,7 @@ def list_knowledge_files() -> List[Dict[str, Any]]:
         rows = conn.execute(
             """
             SELECT k.id, k.filename, k.file_size, k.char_count, k.mtime, k.first_seen_utc,
-                   k.last_seen_utc, k.last_nlp_at_utc
+                   k.last_seen_utc, k.last_nlp_at_utc, k.metadata_json
             FROM knowledge_file k
             WHERE k.is_present = 1
             ORDER BY k.last_seen_utc DESC
@@ -183,6 +194,14 @@ def list_knowledge_files() -> List[Dict[str, Any]]:
         ).fetchall()
     result: List[Dict[str, Any]] = []
     for r in rows:
+        meta: Dict[str, Any] = {}
+        if r["metadata_json"]:
+            try:
+                parsed = json.loads(r["metadata_json"])
+                if isinstance(parsed, dict):
+                    meta = parsed
+            except (json.JSONDecodeError, TypeError):
+                meta = {}
         result.append(
             {
                 "id": str(r["id"]),
@@ -193,6 +212,7 @@ def list_knowledge_files() -> List[Dict[str, Any]]:
                 "uploaded_at": r["first_seen_utc"],
                 "last_seen_at": r["last_seen_utc"],
                 "last_nlp_at": r["last_nlp_at_utc"],
+                "metadata": meta,
             }
         )
     return result
@@ -320,4 +340,8 @@ def default_stats() -> Dict[str, Any]:
         "total_keyword_hits": 0,
         "source_documents": [],
         "aggregate_run_id": None,
+        "report_provenance": [],
+        "recency_weighted": False,
+        "recency_half_life_days": 548.0,
+        "weighted_document_count": 0.0,
     }

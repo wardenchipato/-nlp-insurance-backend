@@ -360,6 +360,28 @@ def _kb_term_prevalence_lifts(
     return out
 
 
+def _corpus_recency_calibration_factor(kb_stats: dict | None) -> float:
+    """
+    When aggregate stats were built with report-date recency weights, scale KB lifts slightly
+    so a corpus dominated by older press releases applies gentler calibration.
+    """
+    if not kb_stats or not kb_stats.get("recency_weighted"):
+        return 1.0
+    prov = kb_stats.get("report_provenance") or []
+    if not prov:
+        wdc = float(kb_stats.get("weighted_document_count") or 0)
+        doc_n = float(kb_stats.get("document_count") or 0)
+        if doc_n > 0 and wdc > 0:
+            mean_w = wdc / doc_n
+        else:
+            return 1.0
+    else:
+        weights = [float(p.get("recency_weight") or 0.5) for p in prov if isinstance(p, dict)]
+        mean_w = sum(weights) / len(weights) if weights else 0.5
+    # mean_w in [0.12, 1.0] → factor in [0.88, 1.0]
+    return round(0.88 + 0.12 * mean_w, 4)
+
+
 def _adjust_nlp_with_kb(
     nlp_scores: dict,
     kb_stats: dict | None,
@@ -368,6 +390,9 @@ def _adjust_nlp_with_kb(
     """
     Apply (1) category prevalence lifts from the KB corpus and (2) term prevalence lifts:
     terms that appear in many real-accident files get extra weight when matched in this narrative.
+
+    Corpus aggregates and keyword prevalence use recency weighting by report date when
+    metadata headers are present in knowledge .txt files (older reports contribute less).
 
     Returns (
       adjusted_scores,
@@ -400,6 +425,7 @@ def _adjust_nlp_with_kb(
         "claims_severity": 0.20,
     }
     alpha = 0.65
+    recency_factor = _corpus_recency_calibration_factor(kb_stats)
     combined_lifts: dict[str, float] = {}
     category_lifts: dict[str, float] = {}
     adjusted: dict[str, float] = {}
@@ -410,8 +436,11 @@ def _adjust_nlp_with_kb(
         share = float(shares.get(key, 0.0) or 0.0)
         cat_lift = 1.0 + alpha * (share - 0.15)
         cat_lift = max(0.82, min(1.30, cat_lift))
+        # Pull lifts toward neutral when the weighted corpus is mostly older reports
+        cat_lift = 1.0 + (cat_lift - 1.0) * recency_factor
         category_lifts[key] = round(cat_lift, 3)
         tl = float(term_lifts.get(key, 1.0))
+        tl = 1.0 + (tl - 1.0) * recency_factor
         combined = min(1.48, cat_lift * tl)
         combined_lifts[key] = round(combined, 3)
         adjusted[key] = round(min(100.0, float(nlp_scores[key]) * combined), 2)

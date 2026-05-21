@@ -76,6 +76,14 @@ def kb_analyze_all_sync() -> Dict[str, Any]:
     return {"stats": stats}
 
 
+@router.post("/scrape")
+def kb_scrape_sync() -> Dict[str, Any]:
+    """Fetch articles from scrape_sources.yaml into knowledge/ (same .txt storage as upload)."""
+    from app.scrape.runner import run_scraper
+
+    return _kb_call("kb_scrape", run_scraper, sync_after=True)
+
+
 @router.get("/health")
 def kb_health() -> Dict[str, Any]:
     roots = knowledge_scan_roots()

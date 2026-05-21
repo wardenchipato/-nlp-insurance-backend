@@ -189,6 +189,8 @@ export default function App() {
   const pct =
     progress && progress.total > 0 ? Math.round((100 * progress.index) / progress.total) : 0;
   const sources = Array.isArray(stats?.source_documents) ? stats.source_documents : [];
+  const provenance = Array.isArray(stats?.report_provenance) ? stats.report_provenance : [];
+  const recencyWeighted = Boolean(stats?.recency_weighted);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-100 to-zinc-200/80">
@@ -201,9 +203,12 @@ export default function App() {
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-600">
               Drop <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-mono text-zinc-800">.txt</code>{" "}
-              files into <span className="font-mono text-xs">backend/knowledge/</span> or upload here. Runs are
-              persisted in <span className="font-mono text-xs">data/kb.sqlite</span> and drive calibration in{" "}
-              <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs">POST /api/assess</code>.
+              files into <span className="font-mono text-xs">backend/knowledge/</span> or upload here. Optional header
+              metadata (<span className="font-mono text-xs">Source:</span>,{" "}
+              <span className="font-mono text-xs">Period Covered:</span>,{" "}
+              <span className="font-mono text-xs">Date of Report:</span>,{" "}
+              <span className="font-mono text-xs">Source URL:</span>) drives provenance display and recency-weighted
+              statistics for <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs">POST /api/assess</code>.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -278,6 +283,23 @@ export default function App() {
                   <p className="truncate font-medium text-zinc-900">{f.filename}</p>
                   <p className="mt-0.5 text-xs text-zinc-500">
                     {f.char_count?.toLocaleString?.() ?? f.char_count} chars
+                    {f.metadata?.source ? (
+                      <>
+                        {" "}
+                        · <span className="text-zinc-700">{f.metadata.source}</span>
+                      </>
+                    ) : null}
+                    {f.metadata?.date_of_report ? (
+                      <>
+                        {" "}
+                        · report {f.metadata.date_of_report}
+                      </>
+                    ) : f.metadata?.report_date ? (
+                      <> · report {f.metadata.report_date}</>
+                    ) : null}
+                    {f.metadata?.recency_weight != null ? (
+                      <> · weight {(Number(f.metadata.recency_weight) * 100).toFixed(0)}%</>
+                    ) : null}
                     {f.last_nlp_at ? (
                       <>
                         {" "}
@@ -329,12 +351,60 @@ export default function App() {
                 <div className="rounded-xl border border-zinc-100 bg-zinc-50/80 p-4 sm:col-span-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Run timestamp</p>
                   <p className="mt-1 font-mono text-sm text-zinc-800">{stats.analyzed_at || "—"}</p>
+                  {recencyWeighted && (
+                    <p className="mt-2 text-xs text-emerald-800">
+                      Recency-weighted aggregate (half-life {stats.recency_half_life_days ?? 548} days
+                      {stats.weighted_document_count != null
+                        ? ` · effective weight ${Number(stats.weighted_document_count).toFixed(2)}`
+                        : ""}
+                      )
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {sources.length > 0 && (
+              {provenance.length > 0 ? (
+                <div>
+                  <h3 className="text-sm font-semibold text-zinc-800">Report sources (from file metadata)</h3>
+                  <p className="mt-0.5 text-xs text-zinc-500">
+                    Corpus statistics and risk calibration use these sources; older report dates contribute less weight.
+                  </p>
+                  <ul className="mt-3 divide-y divide-zinc-100 rounded-xl border border-zinc-100">
+                    {provenance.map((p, i) => (
+                      <li key={p.filename || i} className="px-4 py-3 text-sm">
+                        <p className="font-medium text-zinc-900">
+                          {p.source || p.filename || "Unknown source"}
+                          {p.recency_weight != null && (
+                            <span className="ml-2 rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold text-emerald-800">
+                              {(Number(p.recency_weight) * 100).toFixed(0)}% weight
+                            </span>
+                          )}
+                        </p>
+                        <p className="mt-0.5 text-xs text-zinc-600">
+                          {p.filename && <span className="font-mono">{p.filename}</span>}
+                          {p.period_covered ? <> · {p.period_covered}</> : null}
+                          {p.date_of_report ? <> · reported {p.date_of_report}</> : null}
+                        </p>
+                        {p.source_url ? (
+                          <a
+                            href={p.source_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1 inline-block truncate text-xs text-indigo-600 hover:underline"
+                          >
+                            {p.source_url}
+                          </a>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : sources.length > 0 ? (
                 <div>
                   <h3 className="text-sm font-semibold text-zinc-800">Documents in this aggregate</h3>
+                  <p className="mt-0.5 text-xs text-zinc-500">
+                    Add Source / Date of Report headers at the top of .txt files for provenance and recency weighting.
+                  </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {sources.map((name) => (
                       <span
@@ -346,7 +416,7 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               <div>
                 <h3 className="text-sm font-semibold text-zinc-800">Category prevalence</h3>

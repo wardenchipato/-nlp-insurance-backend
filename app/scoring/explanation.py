@@ -152,8 +152,34 @@ def build_policyholder_explanation(
 
     if kb_stats and kb_stats.get("document_count", 0) > 0:
         doc_n = kb_stats["document_count"]
-        src = kb_stats.get("source_documents") or []
-        src_txt = ", ".join(src[:12]) + (" …" if len(src) > 12 else "") if src else "not recorded"
+        prov = kb_stats.get("report_provenance") or []
+        if prov:
+            src_lines = []
+            for p in prov[:8]:
+                if not isinstance(p, dict):
+                    continue
+                label = p.get("source") or p.get("filename") or "report"
+                dr = p.get("date_of_report") or p.get("report_date") or ""
+                rw = p.get("recency_weight")
+                bit = str(label)
+                if dr:
+                    bit += f" ({dr})"
+                if rw is not None:
+                    bit += f", recency weight {float(rw):.2f}"
+                src_lines.append(bit)
+            src_txt = "; ".join(src_lines) + (" …" if len(prov) > 8 else "")
+        else:
+            src = kb_stats.get("source_documents") or []
+            src_txt = ", ".join(src[:12]) + (" …" if len(src) > 12 else "") if src else "not recorded"
+        recency_note = ""
+        if kb_stats.get("recency_weighted"):
+            hl = kb_stats.get("recency_half_life_days", 548)
+            wdc = kb_stats.get("weighted_document_count")
+            recency_note = (
+                f" Aggregates use recency weighting by report date (half-life ~{int(hl)} days"
+                + (f", effective corpus weight {wdc:.2f}" if wdc else "")
+                + "); older accident reports influence calibration less than recent ones."
+            )
         cat_txt = ", ".join(f"{k}×{v}" for k, v in sorted((kb_corpus_category_lifts or {}).items()))
         term_txt = ", ".join(f"{k}×{v}" for k, v in sorted((kb_term_prevalence_lifts or {}).items()))
         lift_txt_eff = ", ".join(f"{k}×{v}" for k, v in sorted(kb_lifts.items()))
@@ -161,8 +187,9 @@ def build_policyholder_explanation(
             _sec(
                 "Accident knowledge base influence",
                 (
-                    f"Statistics come from your knowledge/ corpus ({doc_n} non-empty document(s) "
-                    f"in the last run: {src_txt}). "
+                    f"Statistics come from your knowledge corpus ({doc_n} document(s); "
+                    f"sources from file metadata where present: {src_txt})."
+                    f"{recency_note} "
                     f"(1) Dimension prevalence across files (category lifts: {cat_txt or 'n/a'}). "
                     f"(2) Phrase prevalence—when a term like Mutare appears in many accident files, "
                     f"and the applicant also typed it in city/placename fields, that dimension gets extra lift "
@@ -217,6 +244,8 @@ def build_policyholder_explanation(
             "gazette_match_count": gazette_match_count,
             "kb_document_count": (kb_stats or {}).get("document_count", 0),
             "kb_source_documents": (kb_stats or {}).get("source_documents") or [],
+            "kb_report_provenance": (kb_stats or {}).get("report_provenance") or [],
+            "kb_recency_weighted": bool((kb_stats or {}).get("recency_weighted")),
             "kb_aggregate_run_id": (kb_stats or {}).get("aggregate_run_id"),
             "kb_lifts": kb_lifts,
             "kb_corpus_category_lifts": kb_corpus_category_lifts or {},

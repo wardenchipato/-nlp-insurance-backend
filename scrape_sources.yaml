@@ -1,0 +1,57 @@
+# Scraper config — only road-traffic / accident reports are saved (see accident_filter).
+# Run: py scripts/run_scraper.py
+# Add sources by copying a block under `sources:`.
+
+defaults:
+  max_articles_per_source: 12
+  delay_seconds: 1.5
+  request_timeout_seconds: 25
+  discovery_multiplier: 12
+  user_agent: "NLP-Insurance-KB-Scraper/1.0 (+local research; contact admin)"
+
+# Motor-insurance accident relevance gate (title, link text, and full article body).
+accident_filter:
+  enabled: true
+  min_score: 1
+  # Keep false: filter on full article text after download (headlines rarely say "accident").
+  prefilter_listing_links: false
+  extra_strong_phrases: []
+  extra_weak_terms: []
+
+sources:
+  - id: africa_press_zimbabwe
+    enabled: true
+    source_label: "Africa Press English (Zimbabwe)"
+    listing_urls:
+      - https://www.africa-press.net/zimbabwe/all-news/
+    article_link_match:
+      - "/zimbabwe/all-news/"
+    exclude_link_match:
+      - "/page/"
+      - "/category/"
+      - "/tag/"
+      - "/author/"
+      - "#"
+      - "javascript:"
+
+  - id: newsday_accidents
+    enabled: true
+    trust_accident_listing: true
+    source_label: "NewsDay Zimbabwe"
+    listing_urls:
+      - https://www.newsday.co.zw/index.php/topic/accidents
+      - https://www.newsday.co.zw/tag/road-accidents
+    article_link_match:
+      - "/article/"
+    exclude_link_match:
+      - "/sso"
+      - "email-protection"
+      - "/sport/article/"
+      - "/category/"
+      - "/author/"
+      - "/page/"
+      - "classifieds"
+      - "property.co.zw"
+      - "cars.co.zw"
+      - "#"
+      - "javascript:"
